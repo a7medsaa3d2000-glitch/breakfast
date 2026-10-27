@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الفطار</title>
+    <!-- استدعاء خط Cairo لمظهر عربي أنيق وواضح في الطباعة والصور -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- مكتبة html2canvas لتحويل الفاتورة إلى صورة عالية الجودة للموبايل -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --danger: #dc2626;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 15px;
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 540px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            padding: 22px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px dashed var(--border-color);
+        }
+
+        .app-header h2 {
+            color: #0f172a;
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .section {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #1e293b;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+            padding-bottom: 3px;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-group label {
+            font-weight: 700;
+            width: 52%;
+            font-size: 15px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-wrapper {
+            width: 45%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #f8fafc;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+        }
+
+        /* قسم إضافة حاجات تانية */
+        .extra-item-box {
+            margin-top: 14px;
+            padding: 12px;
+            background: #eff6ff;
+            border: 1px dashed #60a5fa;
+            border-radius: 10px;
+        }
+
+        .extra-item-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .extra-item-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .extra-item-controls input[type="text"] {
+            flex: 2;
+            padding: 9px 12px;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .extra-item-controls input[type="number"] {
+            flex: 1;
+            min-width: 75px;
+            padding: 9px 8px;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+        }
+
+        .extra-item-controls input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .add-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+        }
+
+        .add-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .add-btn:active {
+            transform: scale(0.95);
+        }
+
+        .delete-item-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+            transition: background 0.2s;
+        }
+
+        .delete-item-btn:hover {
+            background: #fecaca;
+        }
+
+        /* صناديق الملخص */
+        .summary-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 800;
+            margin-top: 12px;
+        }
+
+        .bg-budget { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .bg-expense { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .bg-positive { background-color: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+        .bg-negative { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* خيارات الطباعة والأزرار */
+        .options-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .options-bar label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .options-bar input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 13px 10px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-print {
+            background-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-print:hover { background-color: var(--primary-hover); }
+
+        .btn-image {
+            background-color: var(--success);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+        }
+        .btn-image:hover { background-color: var(--success-hover); }
+
+        .btn-reset {
+            grid-column: span 2;
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 9px;
+            font-size: 14px;
+        }
+        .btn-reset:hover { background-color: #e2e8f0; color: #1e293b; }
+
+        /* رسالة التنبيه السريعة (Toast) */
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .toast-msg.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* =========================================================
+           تصميم فاتورة النتيجة المدمجة (تظهر في الطباعة A5 وعند حفظ الصورة)
+           ========================================================= */
+        #receiptCard {
+            display: none;
+            background: #ffffff;
+            color: #0f172a;
+            width: 148mm; /* عرض ورقة A5 القياسي */
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 12px 16px;
+            border: 2px solid #1e293b;
+            border-radius: 12px;
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #334155;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .receipt-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .receipt-meta {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .receipt-budget-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .receipt-stat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .receipt-stat-box .stat-label {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .receipt-stat-box .stat-val {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .receipt-stat-box.highlight .stat-val {
+            color: #166534;
+        }
+
+        .receipt-items-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #1e293b;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* جدول أصناف من عمودين عشان ياخد أصناف كتير في صفحة A5 واحدة */
+        .receipt-items-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .receipt-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #ffffff;
+            font-size: 13px;
+        }
+
+        .receipt-item-row .r-name {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .receipt-item-row .r-price {
+            font-weight: 800;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 1px 7px;
+            border-radius: 4px;
+        }
+
+        .receipt-empty-msg {
+            grid-column: span 2;
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .receipt-totals {
+            border-top: 2px dashed #334155;
+            padding-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .receipt-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        /* وضع التصدير كصورة */
+        .capturing-image {
+            display: block !important;
+            position: fixed;
+            top: 0;
+            left: -9999px;
+            width: 480px !important;
+            z-index: -1;
+            box-shadow: none !important;
+        }
+
+        /* =========================================================
+           إعدادات الطباعة الصارمة لمقاس A5 على صفحة واحدة فقط
+           ========================================================= */
+        @media print {
+            @page {
+                size: A5 portrait;
+                margin: 5mm;
+            }
+
+            html, body {
+                background-color: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100%;
+            }
+
+            /* إخفاء شاشة الإدخال والأزرار بالكامل عند الطباعة */
+            .interactive-view {
+                display: none !important;
+            }
+
+            /* إظهار الفاتورة المدمجة فقط في الطباعة */
+            #receiptCard {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 8px 12px !important;
+                border: 2px solid #000 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn-reset {
+                grid-column: span 1;
+            }
+            .extra-item-controls {
+                flex-wrap: wrap;
+            }
+            .extra-item-controls input[type="text"] {
+                width: 100%;
+                flex: none;
+            }
+            .extra-item-controls input[type="number"] {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- الواجهة التفاعلية لإدخال البيانات -->
+<div class="container interactive-view">
+    <div class="app-header">
+        <h2>🍳 فاتورة تجميعة الفطار</h2>
+        <span class="date-badge" id="currentDateBadge"></span>
+    </div>
+
+    <!-- قسم تجميع الفلوس -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">💰 الميزانية</span>
+        </div>
+        <div class="input-group">
+            <label for="peopleCount">👥 عدد الأفراد:</label>
+            <div class="input-wrapper">
+                <input type="number" id="peopleCount" min="1" step="any" placeholder="مثال: 7" oninput="calculate()">
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="amountPerPerson">💵 هنلم كام من كل واحد:</label>
+            <div class="input-wrapper">
+                <input type="number" id="amountPerPerson" min="0" step="any" placeholder="مثال: 25" oninput="calculate()">
+            </div>
+        </div>
+        <div class="summary-box bg-budget">
+            <span>إجمالي الميزانية:</span>
+            <span id="totalBudget">0 جنيه</span>
+        </div>
+    </div>
+
+    <!-- قسم الطلبات -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">🛒 الطلبات والأصناف</span>
+        </div>
+        
+        <div id="itemsList">
+            <div class="input-group item-row" data-name="🍞 عيش">
+                <label>🍞 عيش:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🧀 جبنة">
+                <label>🧀 جبنة:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🍲 فول">
+                <label>🍲 فول:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🧆 طعمية">
+                <label>🧆 طعمية:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🥚 بيض">
+                <label>🥚 بيض:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🥩 لانشون">
+                <label>🥩 لانشون:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🍯 حلاوة">
+                <label>🍯 حلاوة:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🍟 بطاطس">
+                <label>🍟 بطاطس:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+            <div class="input-group item-row" data-name="🍆 بتنجان">
+                <label>🍆 بتنجان:</label>
+                <div class="input-wrapper">
+                    <input type="number" class="item-cost" min="0" step="any" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <!-- خانة إضافة حاجات تانية بعلامة + -->
+        <div class="extra-item-box">
+            <div class="extra-item-title">➕ حاجات تانية (إضافة صنف جديد):</div>
+            <div class="extra-item-controls">
+                <input type="text" id="customItemName" placeholder="اسم الحاجة (مثال: شاي، مخلل...)" onkeypress="handleEnterKey(event)">
+                <input type="number" id="customItemPrice" min="0" step="any" placeholder="السعر" onkeypress="handleEnterKey(event)">
+                <button type="button" class="add-btn" onclick="addCustomItem()" title="إضافة للأصناف">+</button>
+            </div>
+        </div>
+
+        <div class="summary-box bg-expense">
+            <span>إجمالي الطلبات:</span>
+            <span id="totalExpense">0 جنيه</span>
+        </div>
+    </div>
+
+    <!-- قسم النتيجة النهائية -->
+    <div class="section" style="margin-bottom: 0;">
+        <div class="section-header">
+            <span class="section-title">📊 الخلاصة</span>
+        </div>
+        <div id="finalResultBox" class="summary-box bg-positive">
+            <span id="resultLabel">الباقي معانا:</span>
+            <span id="finalResult">0 جنيه</span>
+        </div>
+    </div>
+
+    <!-- خيارات الطباعة -->
+    <div class="options-bar">
+        <label>
+            <input type="checkbox" id="showZeroItemsToggle" onchange="calculate()">
+            <span>إظهار الأصناف الفارغة (0 جنيه) في الفاتورة المطبوعة</span>
+        </label>
+    </div>
+
+    <!-- أزرار الطباعة وحفظ الصورة -->
+    <div class="actions-grid">
+        <button type="button" class="action-btn btn-print" onclick="printReceipt()">
+            🖨️ طباعة الفاتورة (A5)
+        </button>
+        <button type="button" class="action-btn btn-image" id="saveImgBtn" onclick="saveReceiptAsImage()">
+            📸 حفظ كصورة للموبايل
+        </button>
+        <button type="button" class="action-btn btn-reset" onclick="resetForm()">
+            🔄 تصفير الفاتورة لبدء تجميعة جديدة
+        </button>
+    </div>
+</div>
+
+<!-- =========================================================
+     قالب الفاتورة المدمجة (A5) المخصص للطباعة وحفظ الصورة
+     ========================================================= -->
+<div id="receiptCard">
+    <div class="receipt-header">
+        <h2>🍳 فاتورة تجميعة الفطار</h2>
+        <div class="receipt-meta" id="receiptDateText"></div>
+    </div>
+
+    <!-- ملخص الميزانية في الفاتورة -->
+    <div class="receipt-budget-grid">
+        <div class="receipt-stat-box">
+            <span class="stat-label">عدد الأفراد</span>
+            <span class="stat-val" id="rPeople">0</span>
+        </div>
+        <div class="receipt-stat-box">
+            <span class="stat-label">الفرد دفع</span>
+            <span class="stat-val" id="rPerPerson">0 ج</span>
+        </div>
+        <div class="receipt-stat-box highlight">
+            <span class="stat-label">إجمالي الميزانية</span>
+            <span class="stat-val" id="rTotalBudget">0 ج</span>
+        </div>
+    </div>
+
+    <!-- قائمة الأصناف الفعلية بالنتائج -->
+    <div class="receipt-items-title">
+        <span>📋 تفاصيل الأصناف والطلبات</span>
+        <span id="rItemsCount">0 أصناف</span>
+    </div>
+    <div class="receipt-items-grid" id="receiptItemsContainer">
+        <!-- يتم تعبئتها تلقائياً بالأصناف المشتراة -->
+    </div>
+
+    <!-- الخلاصة النهائية في الفاتورة -->
+    <div class="receipt-totals">
+        <div class="receipt-total-row bg-expense">
+            <span>إجمالي الطلبات:</span>
+            <span id="rTotalExpense">0 جنيه</span>
+        </div>
+        <div class="receipt-total-row bg-positive" id="rFinalBox">
+            <span id="rFinalLabel">الباقي معانا:</span>
+            <span id="rFinalValue">0 جنيه</span>
+        </div>
+    </div>
+
+    <div class="receipt-footer">
+        بألف هنا وشفا 🌺 - تم الحساب بواسطة حاسبة الفطار
+    </div>
+</div>
+
+<!-- إشعار سريع -->
+<div id="toast" class="toast-msg"></div>
+
+<script>
+    // عرض التاريخ والوقت الحالي
+    function updateDateDisplay() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const formatted = now.toLocaleDateString('ar-EG', options);
+        document.getElementById('currentDateBadge').innerText = formatted;
+        document.getElementById('receiptDateText').innerText = formatted;
+    }
+
+    // إظهار رسالة تنبيه خفيفة بدون استخدام alert
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2800);
+    }
+
+    // تنسيق الأرقام لإزالة الكسور غير الضرورية
+    function formatNum(num) {
+        return Number.isInteger(num) ? num : parseFloat(num.toFixed(2));
+    }
+
+    // إضافة صنف جديد من خانة "حاجات تانية"
+    function addCustomItem() {
+        const nameInput = document.getElementById('customItemName');
+        const priceInput = document.getElementById('customItemPrice');
+
+        let name = nameInput.value.trim();
+        let price = parseFloat(priceInput.value);
+
+        if (!name) {
+            showToast('⚠️ اكتب اسم الحاجة الأول');
+            nameInput.focus();
+            return;
+        }
+
+        if (isNaN(price) || price < 0) {
+            price = 0;
+        }
+
+        const itemsList = document.getElementById('itemsList');
+        const row = document.createElement('div');
+        row.className = 'input-group item-row custom-added-row';
+        row.setAttribute('data-name', '🛍️ ' + name);
+
+        const label = document.createElement('label');
+        label.textContent = '🛍️ ' + name + ':';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-wrapper';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'item-cost';
+        input.min = '0';
+        input.step = 'any';
+        input.placeholder = '0';
+        input.value = price > 0 ? price : '';
+        input.oninput = calculate;
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'delete-item-btn';
+        delBtn.innerHTML = '&times;';
+        delBtn.title = 'حذف الصنف';
+        delBtn.onclick = function () {
+            row.remove();
+            calculate();
+            showToast('🗑️ تم حذف الصنف');
+        };
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(delBtn);
+        row.appendChild(label);
+        row.appendChild(wrapper);
+        itemsList.appendChild(row);
+
+        // تفريغ الخانات استعداداً لإضافة صنف آخر
+        nameInput.value = '';
+        priceInput.value = '';
+        nameInput.focus();
+
+        calculate();
+        showToast('✅ تمت إضافة "' + name + '" للأصناف');
+    }
+
+    // دعم الضغط على زر Enter لإضافة الصنف فوراً
+    function handleEnterKey(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addCustomItem();
+        }
+    }
+
+    // دالة الحساب وتحديث الفاتورة المدمجة (A5)
+    function calculate() {
+        updateDateDisplay();
+
+        // 1. حساب الميزانية
+        let people = parseFloat(document.getElementById('peopleCount').value) || 0;
+        let perPerson = parseFloat(document.getElementById('amountPerPerson').value) || 0;
+        let budget = formatNum(people * perPerson);
+        document.getElementById('totalBudget').innerText = budget + ' جنيه';
+
+        // 2. حساب الطلبات وتجهيز بيانات الفاتورة
+        let rows = document.querySelectorAll('.item-row');
+        let totalExpenses = 0;
+        let activeItems = [];
+        let showZero = document.getElementById('showZeroItemsToggle').checked;
+
+        rows.forEach(row => {
+            let itemName = row.getAttribute('data-name') || 'صنف';
+            let input = row.querySelector('.item-cost');
+            let cost = parseFloat(input.value) || 0;
+            totalExpenses += cost;
+
+            if (cost > 0 || showZero) {
+                activeItems.push({ name: itemName, cost: formatNum(cost) });
+            }
+        });
+
+        totalExpenses = formatNum(totalExpenses);
+        document.getElementById('totalExpense').innerText = totalExpenses + ' جنيه';
+
+        // 3. حساب الصافي (الباقي أو العجز)
+        let net = formatNum(budget - totalExpenses);
+        let resultBox = document.getElementById('finalResultBox');
+        let resultLabel = document.getElementById('resultLabel');
+        let finalResult = document.getElementById('finalResult');
+
+        finalResult.innerText = Math.abs(net) + ' جنيه';
+
+        if (net < 0) {
+            resultBox.className = 'summary-box bg-negative';
+            resultLabel.innerText = 'عجز (مطلوب نكمل):';
+        } else {
+            resultBox.className = 'summary-box bg-positive';
+            resultLabel.innerText = 'الباقي معانا:';
+        }
+
+        // 4. تحديث قالب الفاتورة (Receipt Card) للطباعة وحفظ الصورة
+        document.getElementById('rPeople').innerText = people || 0;
+        document.getElementById('rPerPerson').innerText = formatNum(perPerson) + ' جنيه';
+        document.getElementById('rTotalBudget').innerText = budget + ' جنيه';
+        document.getElementById('rTotalExpense').innerText = totalExpenses + ' جنيه';
+
+        let rFinalBox = document.getElementById('rFinalBox');
+        let rFinalLabel = document.getElementById('rFinalLabel');
+        let rFinalValue = document.getElementById('rFinalValue');
+
+        rFinalValue.innerText = Math.abs(net) + ' جنيه';
+        if (net < 0) {
+            rFinalBox.className = 'receipt-total-row bg-negative';
+            rFinalLabel.innerText = 'عجز (مطلوب نكمل):';
+        } else {
+            rFinalBox.className = 'receipt-total-row bg-positive';
+            rFinalLabel.innerText = 'الباقي معانا:';
+        }
+
+        // بناء جدول الأصناف في الفاتورة
+        const receiptContainer = document.getElementById('receiptItemsContainer');
+        receiptContainer.innerHTML = '';
+        document.getElementById('rItemsCount').innerText = activeItems.length + ' صنف';
+
+        if (activeItems.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'receipt-empty-msg';
+            emptyDiv.innerText = 'لم يتم إدخال أسعار أي أصناف بعد';
+            receiptContainer.appendChild(emptyDiv);
+        } else {
+            activeItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'receipt-item-row';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'r-name';
+                nameSpan.textContent = item.name;
+
+                const priceSpan = document.createElement('span');
+                priceSpan.className = 'r-price';
+                priceSpan.textContent = item.cost + ' ج';
+
+                itemDiv.appendChild(nameSpan);
+                itemDiv.appendChild(priceSpan);
+                receiptContainer.appendChild(itemDiv);
+            });
+        }
+    }
+
+    // طباعة الفاتورة بمقاس A5
+    function printReceipt() {
+        // لو المستخدم كاتب حاجة في خانة "حاجات تانية" ونسي يضغط + نضيفها تلقائياً قبل الطباعة
+        const pendingName = document.getElementById('customItemName').value.trim();
+        if (pendingName) {
+            addCustomItem();
+        }
+        calculate();
+        window.print();
+    }
+
+    // حفظ الفاتورة كصورة عالية الجودة على الموبايل أو الكمبيوتر
+    async function saveReceiptAsImage() {
+        const pendingName = document.getElementById('customItemName').value.trim();
+        if (pendingName) {
+            addCustomItem();
+        }
+        calculate();
+
+        const btn = document.getElementById('saveImgBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ جاري تجهيز الصورة...';
+        btn.disabled = true;
+
+        const receiptCard = document.getElementById('receiptCard');
+        receiptCard.classList.add('capturing-image');
+
+        try {
+            const canvas = await html2canvas(receiptCard, {
+                scale: 2.5, // دقة عالية جداً وواضحة على الموبايل
+                backgroundColor: '#ffffff',
+                useCORS: true
+            });
+
+            receiptCard.classList.remove('capturing-image');
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    showToast('❌ حدث خطأ أثناء إنشاء الصورة');
+                    return;
+                }
+
+                const fileName = `فاتورة-الفطار-${new Date().toISOString().slice(0, 10)}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                // لو الموبايل بيدعم المشاركة المباشرة أو الحفظ في الاستوديو
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'فاتورة تجميعة الفطار',
+                            text: 'تفاصيل فاتورة الفطار'
+                        });
+                        showToast('✅ تم تجهيز الصورة بنجاح');
+                        return;
+                    } catch (err) {
+                        // لو المستخدم قفل نافذة المشاركة ينزل الصورة مباشرة
+                        if (err.name !== 'AbortError') {
+                            triggerDownload(canvas, fileName);
+                        }
+                        return;
+                    }
+                }
+
+                // تنزيل مباشر للصورة على الموبايل أو الكمبيوتر
+                triggerDownload(canvas, fileName);
+            }, 'image/png');
+
+        } catch (error) {
+            receiptCard.classList.remove('capturing-image');
+            showToast('❌ تعذر حفظ الصورة، جرب مرة أخرى');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function triggerDownload(canvas, fileName) {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('📸 تم حفظ صورة الفاتورة على جهازك');
+    }
+
+    // تصفير الفاتورة لبدء يوم جديد
+    function resetForm() {
+        document.getElementById('peopleCount').value = '';
+        document.getElementById('amountPerPerson').value = '';
+        document.getElementById('customItemName').value = '';
+        document.getElementById('customItemPrice').value = '';
+
+        // حذف الأصناف الإضافية والاحتفاظ بالأصناف الأساسية
+        document.querySelectorAll('.custom-added-row').forEach(row => row.remove());
+
+        // تصفير أسعار الأصناف الأساسية
+        document.querySelectorAll('.item-cost').forEach(input => {
+            input.value = '';
+        });
+
+        calculate();
+        showToast('🔄 تم تصفير الفاتورة بالكامل');
+    }
+
+    // تشغيل الحساب المبدئي عند فتح الصفحة
+    window.onload = function () {
+        calculate();
+    };
+</script>
+
+</body>
+</html>
